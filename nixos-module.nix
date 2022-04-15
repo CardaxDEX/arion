@@ -37,11 +37,16 @@ let
           cfg.docker.client.package
         ];
         environment.ARION_PREBUILT = config.settings.out.dockerComposeYaml;
+        preStart = ''
+          echo 1>&2 "docker compose file: $ARION_PREBUILT"
+          arion --prebuilt-file "$ARION_PREBUILT" down
+        '';
         script = ''
           echo 1>&2 "docker compose file: $ARION_PREBUILT"
           arion --prebuilt-file "$ARION_PREBUILT" up
         '';
         preStop = ''
+          echo 1>&2 "docker compose file: $ARION_PREBUILT"
           arion --prebuilt-file "$ARION_PREBUILT" down
         '';
       };
