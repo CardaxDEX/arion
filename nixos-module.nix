@@ -36,18 +36,23 @@ let
           cfg.package
           cfg.docker.client.package
         ];
+        # See https://www.freedesktop.org/software/systemd/man/systemd.service.html
+        serviceConfig = {
+          # Sent Ctrl-C
+          KillSignal="SIGINT";
+          # Give enough time for graceful shutdown
+          # FIXME Is this a bug? 600 == 10sec
+          TimeoutStopSec = "600s";
+          RestartSec = "60s";
+        };
         environment.ARION_PREBUILT = config.settings.out.dockerComposeYaml;
         preStart = ''
-          echo 1>&2 "docker compose file: $ARION_PREBUILT"
-          arion --prebuilt-file "$ARION_PREBUILT" down
+          # Try to cleanup
+          arion --prebuilt-file "$ARION_PREBUILT" down || true
         '';
         script = ''
           echo 1>&2 "docker compose file: $ARION_PREBUILT"
           arion --prebuilt-file "$ARION_PREBUILT" up
-        '';
-        preStop = ''
-          echo 1>&2 "docker compose file: $ARION_PREBUILT"
-          arion --prebuilt-file "$ARION_PREBUILT" down
         '';
       };
     };
@@ -72,7 +77,7 @@ in
       };
       package = mkOption {
         type = types.package;
-        
+
         default = (import ./. { inherit pkgs; }).arion;
         description = ''
           Arion package to use. This will provide <literal>arion</literal>
